@@ -27,7 +27,7 @@ public class Transaction {
     private String description;
 
     @NotNull(message = "The Transaction date can't be null.")
-    @PastOrPresent(message = "The Transaction date date must be in the past or present.")
+    @PastOrPresent(message = "The Transaction date must be in the past or present.")
     @Column(nullable = false)
     private LocalDateTime transactionDateTime;
 
