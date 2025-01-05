@@ -18,7 +18,6 @@ public class TransactionManagerApplication {
         TransactionController transactionController = context.getBean(TransactionController.class);
 
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-
         server.createContext("/transactions", transactionController);
 
         server.setExecutor(null);

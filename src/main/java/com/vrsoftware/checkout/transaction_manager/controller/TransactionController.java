@@ -1,12 +1,14 @@
 package com.vrsoftware.checkout.transaction_manager.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.vrsoftware.checkout.transaction_manager.exceptions.ExceptionHandler;
 import com.vrsoftware.checkout.transaction_manager.model.Transaction;
 import com.vrsoftware.checkout.transaction_manager.service.TransactionService;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -15,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class TransactionController implements HttpHandler {
@@ -25,41 +29,69 @@ public class TransactionController implements HttpHandler {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private Validator validator;
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         String response;
         int statusCode;
 
-        if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
-            String requestBody = reader.readLine();
+        try {
+            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                String RequestBody = getRequestBody(exchange);
 
-            try {
-                Transaction transaction = objectMapper.readValue(requestBody, Transaction.class);
+                Transaction transaction = objectMapper.readValue(RequestBody, Transaction.class);
 
-                Transaction savedTransaction = transactionService.save(transaction);
+                Set<ConstraintViolation<Transaction>> violations = validator.validate(transaction); //@Valid
+                if (!violations.isEmpty()) {
+                    ExceptionHandler.handleValidationException(exchange,
+                            violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "))
+                    );
+                    return;
+                }
 
-                response = "Transaction saved with the following ID: " + savedTransaction.getId();
+                response = "Transaction saved with the following ID: " + transactionService.save(transaction).getId();
                 statusCode = 200;
-            } catch (JsonMappingException e) {
-                response = "Error mapping the JSON to Transaction object: " + e.getMessage();
-                statusCode = 400;
-            } catch (JsonProcessingException e) {
-                response = "Error processing the JSON: " + e.getMessage();
-                statusCode = 400;
-            }
-        } else if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-            List<Transaction> transactionList = transactionService.findAll();
-            response = transactionList.isEmpty() ? "" : objectMapper.writeValueAsString(transactionList);
-            statusCode = transactionList.isEmpty() ? 204 : 200;
-        } else {
-            response = "Not authorised";
-            statusCode = 405;
-        }
 
-        exchange.sendResponseHeaders(statusCode, response.getBytes().length);
-        OutputStream outputStream = exchange.getResponseBody();
-        outputStream.write(response.getBytes());
-        outputStream.close();
+            } else if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                List<Transaction> transactionList = transactionService.findAll();
+                response = transactionList.isEmpty() ? "No transactions found" : objectMapper.writeValueAsString(transactionList);
+                statusCode = transactionList.isEmpty() ? 204 : 200;
+
+            } else {
+                response = "Unauthorised";
+                statusCode = 405;
+            }
+
+            sendResponse(exchange, statusCode, response);
+
+        } catch (JsonMappingException e) {
+            ExceptionHandler.handleException(exchange, new Exception("Error processing JSON: " + e.getMessage()));
+        } catch (Exception e) {
+            ExceptionHandler.handleException(exchange, e);
+        }
     }
+
+    private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+        if (statusCode == 204) //No Content
+            exchange.sendResponseHeaders(statusCode, -1);
+        else {
+            exchange.sendResponseHeaders(statusCode, response.getBytes().length);
+            OutputStream outputStream = exchange.getResponseBody();
+            outputStream.write(response.getBytes());
+        }
+        exchange.getResponseBody().close();
+    }
+
+    private static String getRequestBody(HttpExchange exchange) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
+        StringBuilder requestBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            requestBody.append(line);
+        }
+        return requestBody.toString();
+    }
+
 }

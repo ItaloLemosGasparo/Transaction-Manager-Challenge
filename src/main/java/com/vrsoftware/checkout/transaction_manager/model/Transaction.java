@@ -10,7 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -29,7 +29,7 @@ public class Transaction {
     @NotNull(message = "The Transaction date can't be null.")
     @PastOrPresent(message = "The Transaction date date must be in the past or present.")
     @Column(nullable = false)
-    private LocalDate transactionDate;
+    private LocalDateTime transactionDateTime;
 
     @NotNull(message = "The value can't be null.")
     @DecimalMin(value = "0.0", inclusive = false, message = "The price must be greater than 0.")
