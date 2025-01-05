@@ -20,4 +20,41 @@ public class TransactionService {
     public List<Transaction> findAll() {
         return transactionRepository.findAll();
     }
+
+
+    public List<TransactionDTO> findAllWithExchangeRate(String countryCurrency) {
+        return transactionRepository.findAll().stream()
+                .map(transaction -> {
+                    try {
+                        TransactionDTO transactionDTO = new TransactionDTO();
+                        transactionDTO.setId(transaction.getId());
+                        transactionDTO.setDescription(transaction.getDescription());
+                        transactionDTO.setTransactionDateTime(transaction.getTransactionDateTime());
+                        transactionDTO.setAmount(transaction.getAmount());
+
+                        String apiResponse = ApiCaller.checkExchangeRate(countryCurrency, transaction.getTransactionDateTime());
+                        BigDecimal bigDecimal = tryParseBigDecimal(apiResponse);
+
+                        if (bigDecimal != null) {
+                            transactionDTO.setExchange_rate(bigDecimal.toString());
+                            transactionDTO.setConverted_amount(transaction.getAmount().multiply(bigDecimal).setScale(2, RoundingMode.HALF_UP));
+                            transactionDTO.setCurrency(countryCurrency);
+                        } else
+                            transactionDTO.setExchange_rate(apiResponse);
+
+                        return transactionDTO;
+                    } catch (IOException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).collect(Collectors.toList());
+    }
+
+    public static BigDecimal tryParseBigDecimal(String str) {
+        try {
+            return new BigDecimal(str);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
 }
