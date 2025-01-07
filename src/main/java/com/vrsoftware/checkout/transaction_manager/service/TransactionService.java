@@ -27,7 +27,6 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
-
     public List<TransactionDTO> findAllWithExchangeRate(String countryCurrency) {
         return transactionRepository.findAll().stream()
                 .map(transaction -> mapTransactionToDto(countryCurrency, transaction)).collect(Collectors.toList());

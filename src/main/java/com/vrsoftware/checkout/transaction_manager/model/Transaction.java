@@ -42,7 +42,7 @@ public class Transaction {
 
     @PreUpdate
     @PrePersist
-    private void roundAmount() {
+    public void roundAmount() {
         this.amount = amount.setScale(2, RoundingMode.HALF_UP);
     }
 }

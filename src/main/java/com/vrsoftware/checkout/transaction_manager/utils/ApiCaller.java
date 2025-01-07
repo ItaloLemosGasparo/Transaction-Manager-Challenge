@@ -15,8 +15,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ApiCaller {
-    private static String baseUrl = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange";
+    public static String baseUrl = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange";
     private static HttpClient client = HttpClient.newHttpClient();
+
+    //to Unit tests be possible
+    public static void setHttpClient(HttpClient httpClient) {
+        client = httpClient;
+    }
 
     public static String checkExchangeRate(String countryCurrency, LocalDateTime localDateTime) throws IOException, InterruptedException {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
@@ -33,7 +38,7 @@ public class ApiCaller {
 
             if (records.length() > 0) {
                 JSONObject mostRecentRecord = records.getJSONObject(0);
-                return mostRecentRecord.getBigDecimal("exchange_rate").toString();
+                return mostRecentRecord.getString("exchange_rate");
             } else
                 return "Exchange rate not found within the last 6 months.";
         } else
