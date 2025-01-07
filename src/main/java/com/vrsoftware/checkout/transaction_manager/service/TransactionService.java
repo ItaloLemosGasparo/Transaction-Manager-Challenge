@@ -30,32 +30,35 @@ public class TransactionService {
 
     public List<TransactionDTO> findAllWithExchangeRate(String countryCurrency) {
         return transactionRepository.findAll().stream()
-                .map(transaction -> {
-                    try {
-                        TransactionDTO transactionDTO = new TransactionDTO();
-                        transactionDTO.setId(transaction.getId());
-                        transactionDTO.setDescription(transaction.getDescription());
-                        transactionDTO.setTransactionDateTime(transaction.getTransactionDateTime());
-                        transactionDTO.setAmount(transaction.getAmount());
-
-                        String apiResponse = ApiCaller.checkExchangeRate(countryCurrency, transaction.getTransactionDateTime());
-                        BigDecimal bigDecimal = tryParseBigDecimal(apiResponse);
-
-                        if (bigDecimal != null) {
-                            transactionDTO.setExchange_rate(bigDecimal.toString());
-                            transactionDTO.setConverted_amount(transaction.getAmount().multiply(bigDecimal).setScale(2, RoundingMode.HALF_UP));
-                            transactionDTO.setCurrency(countryCurrency);
-                        } else
-                            transactionDTO.setExchange_rate(apiResponse);
-
-                        return transactionDTO;
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).collect(Collectors.toList());
+                .map(transaction -> mapTransactionToDto(countryCurrency, transaction)).collect(Collectors.toList());
     }
 
-    public static BigDecimal tryParseBigDecimal(String str) {
+    private static TransactionDTO mapTransactionToDto(String countryCurrency, Transaction transaction) {
+        try {
+            TransactionDTO transactionDTO = new TransactionDTO(
+                    transaction.getId(),
+                    transaction.getDescription(),
+                    transaction.getTransactionDateTime(),
+                    transaction.getAmount()
+            );
+
+            String apiResponse = ApiCaller.checkExchangeRate(countryCurrency, transaction.getTransactionDateTime());
+            BigDecimal bigDecimal = tryParseBigDecimal(apiResponse);
+
+            if (bigDecimal != null) {
+                transactionDTO.setExchange_rate(bigDecimal.setScale(2, RoundingMode.HALF_UP).toString());
+                transactionDTO.setConverted_amount(transaction.getAmount().multiply(bigDecimal).setScale(2, RoundingMode.HALF_UP));
+                transactionDTO.setCurrency(countryCurrency);
+            } else
+                transactionDTO.setExchange_rate(apiResponse);
+
+            return transactionDTO;
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static BigDecimal tryParseBigDecimal(String str) {
         try {
             return new BigDecimal(str);
         } catch (NumberFormatException e) {

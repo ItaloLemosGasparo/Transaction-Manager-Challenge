@@ -1,7 +1,6 @@
 package com.vrsoftware.checkout.transaction_manager.utils;
 
 import java.io.IOException;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -20,13 +19,10 @@ public class ApiCaller {
     private static HttpClient client = HttpClient.newHttpClient();
 
     public static String checkExchangeRate(String countryCurrency, LocalDateTime localDateTime) throws IOException, InterruptedException {
-        // Formatando as datas para "yyyy-MM-dd"
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-        String formattedFromDate = localDateTime.format(formatter);
-        String formattedMonthsAgoDate = localDateTime.minusMonths(6).format(formatter);
 
         String url = String.format("%s?fields=country_currency_desc,exchange_rate,record_date&filter=country_currency_desc:eq:%s,record_date:gte:%s,record_date:lte:%s&sort=-record_date",
-                baseUrl, countryCurrency, formattedMonthsAgoDate, formattedFromDate);
+                baseUrl, countryCurrency, localDateTime.minusMonths(6).format(formatter), localDateTime.format(formatter));
 
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -37,7 +33,7 @@ public class ApiCaller {
 
             if (records.length() > 0) {
                 JSONObject mostRecentRecord = records.getJSONObject(0);
-                return mostRecentRecord.getBigDecimal("exchange_rate").setScale(2, RoundingMode.HALF_UP).toString();
+                return mostRecentRecord.getBigDecimal("exchange_rate").toString();
             } else
                 return "Exchange rate not found within the last 6 months.";
         } else
@@ -45,7 +41,7 @@ public class ApiCaller {
     }
 
     public static List<String> getCountryCurrencies() throws IOException, InterruptedException {
-        String url = String.format("%s?fields=country_currency_desc", baseUrl);
+        String url = baseUrl + "?fields=country_currency_desc";
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 

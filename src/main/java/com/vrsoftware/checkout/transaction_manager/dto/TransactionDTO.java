@@ -1,6 +1,5 @@
 package com.vrsoftware.checkout.transaction_manager.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +11,6 @@ import java.util.UUID;
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class TransactionDTO {
 
     private UUID id;
@@ -22,4 +20,11 @@ public class TransactionDTO {
     private String exchange_rate;
     private BigDecimal converted_amount;
     private String currency;
+
+    public TransactionDTO(UUID id, String description, LocalDateTime transactionDateTime, BigDecimal amount) {
+        this.id = id;
+        this.description = description;
+        this.transactionDateTime = transactionDateTime;
+        this.amount = amount;
+    }
 }

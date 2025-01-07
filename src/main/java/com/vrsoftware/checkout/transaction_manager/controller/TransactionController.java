@@ -68,11 +68,11 @@ public class TransactionController implements HttpHandler {
                             return;
 
                         List<TransactionDTO> transactionDTOList = transactionService.findAllWithExchangeRate(countryCurrency);
-                        response = transactionDTOList.isEmpty() ? "" : objectMapper.writeValueAsString(transactionDTOList);
+                        response = transactionDTOList.isEmpty() ? "" : objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionDTOList);
                         statusCode = transactionDTOList.isEmpty() ? 204 : 200;
                     } else {
                         List<Transaction> transactionList = transactionService.findAll();
-                        response = transactionList.isEmpty() ? "" : objectMapper.writeValueAsString(transactionList);
+                        response = transactionList.isEmpty() ? "" : objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionList);
                         statusCode = transactionList.isEmpty() ? 204 : 200;
                     }
                     break;

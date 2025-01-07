@@ -5,7 +5,9 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -16,6 +18,8 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Transaction {
 
     @Id
@@ -39,6 +43,6 @@ public class Transaction {
     @PreUpdate
     @PrePersist
     private void roundAmount() {
-        this.amount = amount.setScale(2, RoundingMode.HALF_UP);  // Arredonda para o centavo mais próximo
+        this.amount = amount.setScale(2, RoundingMode.HALF_UP);
     }
 }
