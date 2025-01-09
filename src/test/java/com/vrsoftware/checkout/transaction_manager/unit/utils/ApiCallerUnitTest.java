@@ -12,6 +12,7 @@ import java.util.List;
 
 import com.vrsoftware.checkout.transaction_manager.utils.ApiCaller;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +32,8 @@ class ApiCallerUnitTest {
     }
 
     @Test
-    void testCheckExchangeRate() throws IOException, InterruptedException {
+    @DisplayName("Should build the right url then return the exchange rate")
+    void checkExchangeRate() throws IOException, InterruptedException {
         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(mockHttpResponse);
 
         String jsonResponse = """
@@ -58,7 +60,8 @@ class ApiCallerUnitTest {
     }
 
     @Test
-    void testGetCountryCurrencies() throws IOException, InterruptedException {
+    @DisplayName("Should build the right url then return the list of country currencies")
+    void getCountryCurrencies() throws IOException, InterruptedException {
         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(mockHttpResponse);
 
         String jsonResponse = """

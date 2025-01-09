@@ -4,6 +4,7 @@ import com.vrsoftware.checkout.transaction_manager.model.Transaction;
 import com.vrsoftware.checkout.transaction_manager.repository.TransactionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +25,8 @@ public class TransactionRepositoryIntegrationTest {
     private EntityManager entityManager;
 
     @Test
-    void shouldSaveTheTransactionAndGenerateTheUUID() {
+    @DisplayName("Should save the transaction and generate a UUID")
+    void uuidGenerationTest() {
         Transaction transaction = new Transaction(
                 null,
                 "Test Description",
@@ -41,7 +43,8 @@ public class TransactionRepositoryIntegrationTest {
     }
 
     @Test
-    void shouldSaveTheTransactionAndRoundTheAmount() {
+    @DisplayName("Should save the transaction and round the amount")
+    void saveAndRoundTheAmount() {
         Transaction transaction = new Transaction(
                 null,
                 "Test Description",
@@ -59,7 +62,8 @@ public class TransactionRepositoryIntegrationTest {
 
     @Test
     @Transactional
-    void shouldUpdateTheTransactionAndRoundTheAmount() {
+    @DisplayName("Should update the transaction and round the amount")
+    void updateAndRoundTheAmount() {
         Transaction transaction = new Transaction(
                 null,
                 "Test Description",

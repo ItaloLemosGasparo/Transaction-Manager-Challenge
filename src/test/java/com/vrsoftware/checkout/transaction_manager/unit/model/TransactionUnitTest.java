@@ -1,6 +1,7 @@
 package com.vrsoftware.checkout.transaction_manager.unit.model;
 
 import com.vrsoftware.checkout.transaction_manager.model.Transaction;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TransactionUnitTest {
 
     @Test
+    @DisplayName("Should round the amount")
     void roundingTest() {
         Transaction transaction = new Transaction(
                 null,

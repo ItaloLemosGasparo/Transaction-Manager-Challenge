@@ -4,6 +4,7 @@ import com.vrsoftware.checkout.transaction_manager.controller.TransactionControl
 import com.vrsoftware.checkout.transaction_manager.model.Transaction;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest
 public class TransactionIntegrationTest {
@@ -23,7 +26,8 @@ public class TransactionIntegrationTest {
     private Validator validator;
 
     @Test
-    void ValidTransactionValidTransaction() {
+    @DisplayName("Should have no violations")
+    void noViolations() {
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 "Test Description",
@@ -37,7 +41,8 @@ public class TransactionIntegrationTest {
     }
 
     @Test
-    void ValidTransactionInvalidDescription() {
+    @DisplayName("Should have description size violation")
+    void descriptionViolation() {
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 "012345678901234567890123456789012345678901234567890", //51 characters
@@ -52,7 +57,8 @@ public class TransactionIntegrationTest {
     }
 
     @Test
-    void ValidTransactionInvalidTransactionDateTime() {
+    @DisplayName("Should have transaction date time in the future violation")
+    void transactionDateTimeViolation() {
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 "Test Description",
@@ -67,7 +73,8 @@ public class TransactionIntegrationTest {
     }
 
     @Test
-    void ValidTransactionInvalidAmount() {
+    @DisplayName("Should have negative amount violation")
+    void amountViolation() {
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 "Test Description",

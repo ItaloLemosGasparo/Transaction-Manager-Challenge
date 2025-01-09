@@ -1,6 +1,7 @@
 package com.vrsoftware.checkout.transaction_manager.integration.utils;
 
 import com.vrsoftware.checkout.transaction_manager.utils.ApiCaller;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -14,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class ApiCallerIntegrationTest {
 
     @Test
-    void testCheckExchangeRateWith() throws IOException, InterruptedException {
+    @DisplayName("Should get a exchange rate from fiscaldata.treasury api")
+    void checkExchangeRateWith() throws IOException, InterruptedException {
         LocalDateTime testDate = LocalDateTime.of(2025, 1, 1, 0, 0);
         String exchangeRate = ApiCaller.checkExchangeRate("Brazil-Real", testDate);
 
@@ -23,7 +25,8 @@ class ApiCallerIntegrationTest {
     }
 
     @Test
-    void testGetCountryCurrenciesWith() throws IOException, InterruptedException {
+    @DisplayName("Should get all country currencies from fiscaldata.treasury api")
+    void getCountryCurrenciesWith() throws IOException, InterruptedException {
         List<String> currencies = ApiCaller.getCountryCurrencies();
 
         assertNotNull(currencies);
