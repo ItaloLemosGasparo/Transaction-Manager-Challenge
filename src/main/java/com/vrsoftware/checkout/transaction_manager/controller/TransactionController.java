@@ -9,6 +9,7 @@ import com.vrsoftware.checkout.transaction_manager.exceptions.ExceptionHandler;
 import com.vrsoftware.checkout.transaction_manager.model.Transaction;
 import com.vrsoftware.checkout.transaction_manager.service.TransactionService;
 import com.vrsoftware.checkout.transaction_manager.utils.ApiCaller;
+import com.vrsoftware.checkout.transaction_manager.validator.CountryCurrencyValidator;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,54 +37,18 @@ public class TransactionController implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String path = exchange.getRequestURI().getPath();
-        String response;
-        int statusCode;
-
         try {
             switch (exchange.getRequestMethod()) {
                 case "POST":
-                    String RequestBody = getRequestBody(exchange);
-
-                    Transaction transaction = objectMapper.readValue(RequestBody, Transaction.class);
-
-                    Set<ConstraintViolation<Transaction>> violations = validator.validate(transaction); //@Valid
-                    if (!violations.isEmpty()) {
-                        ExceptionHandler.handleValidationException(exchange,
-                                violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "))
-                        );
-                        return;
-                    }
-
-                    response = "Transaction saved with the following ID: " + transactionService.save(transaction).getId();
-                    statusCode = 201;
+                    handlePostRequest(exchange);
                     break;
-
                 case "GET":
-                    String countryCurrency = path.matches("/transactions/[A-Za-z]+(-[A-Za-z ]+)*") ? path.substring(14) : "";
-
-                    if (countryCurrency.length() > 1) {
-                        if (!validateCountryCurrency(exchange, countryCurrency))
-                            return;
-
-                        List<TransactionDTO> transactionDTOList = transactionService.findAllWithExchangeRate(countryCurrency);
-                        response = transactionDTOList.isEmpty() ? "" : objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionDTOList);
-                        statusCode = transactionDTOList.isEmpty() ? 204 : 200;
-                    } else {
-                        List<Transaction> transactionList = transactionService.findAll();
-                        response = transactionList.isEmpty() ? "" : objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionList);
-                        statusCode = transactionList.isEmpty() ? 204 : 200;
-                    }
+                    handleGetRequest(exchange);
                     break;
-
                 default:
-                    response = "Unauthorised";
-                    statusCode = 405;
+                    sendResponse(exchange, 405, "Unauthorised");
                     break;
             }
-
-            sendResponse(exchange, statusCode, response);
-
         } catch (JsonMappingException e) {
             ExceptionHandler.handleException(exchange, new Exception("Error processing JSON: " + e.getMessage()));
         } catch (Exception e) {
@@ -91,13 +56,42 @@ public class TransactionController implements HttpHandler {
         }
     }
 
-    private static boolean validateCountryCurrency(HttpExchange exchange, String countryCurrency) throws IOException, InterruptedException {
-        List<String> countryCurrencies = ApiCaller.getCountryCurrencies();
-        if (countryCurrencies.contains(countryCurrency))
-            return true;
-        else if (countryCurrencies.size() == 1)
-            ExceptionHandler.handleValidationException(exchange, countryCurrencies.size() == 1 ? countryCurrencies.get(0) : "Invalid country currency");
-        return false;
+    private void handlePostRequest(HttpExchange exchange) throws IOException {
+        String requestBody = getRequestBody(exchange);
+        Transaction transaction = objectMapper.readValue(requestBody, Transaction.class);
+
+        Set<ConstraintViolation<Transaction>> violations = validator.validate(transaction);
+        if (!violations.isEmpty()) {
+            ExceptionHandler.handleValidationException(exchange,
+                    violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", ")));
+            return;
+        }
+
+        String response = "Transaction saved with the following ID: " + transactionService.save(transaction).getId();
+        sendResponse(exchange, 201, response);
+    }
+
+    private void handleGetRequest(HttpExchange exchange) throws IOException, InterruptedException {
+        String path = exchange.getRequestURI().getPath();
+        String countryCurrency = path.matches("/transactions/[A-Za-z]+(-[A-Za-z ]+)*") ? path.substring(14) : "";
+
+        String response;
+        int statusCode;
+
+        if (countryCurrency.length() > 1) {
+            if (!CountryCurrencyValidator.validate(exchange, countryCurrency))
+                return;
+
+            List<TransactionDTO> transactionDTOList = transactionService.findAllWithExchangeRate(countryCurrency);
+            response = transactionDTOList.isEmpty() ? "" : objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionDTOList);
+            statusCode = transactionDTOList.isEmpty() ? 204 : 200;
+        } else {
+            List<Transaction> transactionList = transactionService.findAll();
+            response = transactionList.isEmpty() ? "" : objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionList);
+            statusCode = transactionList.isEmpty() ? 204 : 200;
+        }
+
+        sendResponse(exchange, statusCode, response);
     }
 
     private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
@@ -105,20 +99,20 @@ public class TransactionController implements HttpHandler {
             exchange.sendResponseHeaders(statusCode, -1);
         else {
             exchange.sendResponseHeaders(statusCode, response.getBytes().length);
-            OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write(response.getBytes());
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(response.getBytes());
+            }
         }
-        exchange.getResponseBody().close();
     }
 
     private static String getRequestBody(HttpExchange exchange) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
-        StringBuilder requestBody = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            requestBody.append(line);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()))) {
+            StringBuilder requestBody = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                requestBody.append(line);
+            }
+            return requestBody.toString();
         }
-        return requestBody.toString();
     }
-
 }

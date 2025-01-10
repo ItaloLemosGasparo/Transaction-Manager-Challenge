@@ -47,7 +47,6 @@ public class TransactionControllerUnitTest {
     @Test
     @DisplayName("Should return 201 created")
     void handlePOSTRequest() throws Exception {
-        when(httpExchange.getRequestURI()).thenReturn(new URI("/transactions"));
         when(httpExchange.getRequestMethod()).thenReturn("POST");
 
         String requestBody = """
@@ -59,21 +58,21 @@ public class TransactionControllerUnitTest {
                 """;
         when(httpExchange.getRequestBody()).thenReturn(new ByteArrayInputStream(requestBody.getBytes()));
 
-        Transaction recivedTransaction = new Transaction(
+        Transaction receivedTransaction = new Transaction(
                 null,
                 "Test Transaction",
                 LocalDateTime.of(2025, 1, 1, 10, 0),
                 new BigDecimal(123.45)
         );
-        when(objectMapper.readValue(any(String.class), eq(Transaction.class))).thenReturn(recivedTransaction);
+        when(objectMapper.readValue(any(String.class), eq(Transaction.class))).thenReturn(receivedTransaction);
 
         when(validator.validate(any(Transaction.class))).thenReturn(Collections.emptySet());
 
         Transaction savedTransaction = new Transaction(
                 UUID.randomUUID(),
-                recivedTransaction.getDescription(),
-                recivedTransaction.getTransactionDateTime(),
-                recivedTransaction.getAmount()
+                receivedTransaction.getDescription(),
+                receivedTransaction.getTransactionDateTime(),
+                receivedTransaction.getAmount()
         );
         when(transactionService.save(any(Transaction.class))).thenReturn(savedTransaction);
 
@@ -92,26 +91,26 @@ public class TransactionControllerUnitTest {
         when(httpExchange.getRequestURI()).thenReturn(new URI("/transactions"));
         when(httpExchange.getRequestMethod()).thenReturn("GET");
 
-        when(transactionService.findAll()).thenReturn(new ArrayList<>(Arrays.asList(
-                new Transaction(UUID.fromString("4e496802-d86d-4098-aa66-5c7e7ae0710e"), "Test Transaction", LocalDateTime.now(), new BigDecimal(123.45)),
-                new Transaction(UUID.fromString("746021fb-8f34-4407-8ffb-603d0abacd19"), "Test Transaction", LocalDateTime.now(), new BigDecimal(123.45))
-        )));
+        when(transactionService.findAll()).thenReturn(Arrays.asList(
+                new Transaction(UUID.randomUUID(), "Transaction 1", LocalDateTime.now(), new BigDecimal("100.00")),
+                new Transaction(UUID.randomUUID(), "Transaction 2", LocalDateTime.now(), new BigDecimal("200.00"))
+        ));
 
         ObjectWriter objectWriterMock = mock(ObjectWriter.class);
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriterMock);
-        when(objectWriterMock.writeValueAsString(any(ArrayList.class))).thenReturn("""
+        when(objectWriterMock.writeValueAsString(any())).thenReturn("""
                 [
                   {
-                    "id": "4e496802-d86d-4098-aa66-5c7e7ae0710e",
-                    "description": "Test Transaction",
+                    "id": "1",
+                    "description": "Transaction 1",
                     "date": "2025-01-08T10:00:00",
-                    "amount": 123.45
+                    "amount": 100.00
                   },
                   {
-                    "id": "746021fb-8f34-4407-8ffb-603d0abacd19",
-                    "description": "Test Transaction",
+                    "id": "2",
+                    "description": "Transaction 2",
                     "date": "2025-01-08T10:00:00",
-                    "amount": 123.45
+                    "amount": 200.00
                   }
                 ]
                 """);
@@ -125,16 +124,16 @@ public class TransactionControllerUnitTest {
         assertEquals("""
                 [
                   {
-                    "id": "4e496802-d86d-4098-aa66-5c7e7ae0710e",
-                    "description": "Test Transaction",
+                    "id": "1",
+                    "description": "Transaction 1",
                     "date": "2025-01-08T10:00:00",
-                    "amount": 123.45
+                    "amount": 100.00
                   },
                   {
-                    "id": "746021fb-8f34-4407-8ffb-603d0abacd19",
-                    "description": "Test Transaction",
+                    "id": "2",
+                    "description": "Transaction 2",
                     "date": "2025-01-08T10:00:00",
-                    "amount": 123.45
+                    "amount": 200.00
                   }
                 ]
                 """, outputStream.toString());
