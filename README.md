@@ -7,7 +7,7 @@ câmbio.
 
 Este projeto é parte de um desafio técnico e implementa os seguintes requisitos:
 
-1. **Armazenar uma Transação de Compra**:
+1. **Armazenar uma Transação**:
     - Descrição (máximo de 50 caracteres).
     - Data da transação (formato válido).
     - Valor da compra em dólares (positivo e arredondado para dois centavos).
@@ -22,7 +22,6 @@ Este projeto é parte de um desafio técnico e implementa os seguintes requisito
 - **Java 23**
 - **Spring Boot 3.4.1**
 - **H2 Database**
-- **Maven**
 - **Lombok**
 - **Spring Data JPA**: Para interagir com o banco de dados de forma simplificada.
 - **Hibernate Validator (Jakarta Validation)**: Para validação de campos.
